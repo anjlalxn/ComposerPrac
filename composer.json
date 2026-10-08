@@ -1,0 +1,12 @@
+{
+    "name": "pochi/composerpractice",
+    "description": "practice for php lab",
+    "type": "project",
+    "authors": [
+        {
+            "name": "crimsoncrows",
+            "email": "anjelaalexene@gmail.com"
+        }
+    ],
+    "require": {}
+}
