@@ -22,7 +22,33 @@ $username = htmlspecialchars($_SESSION['username']);
 $sql = 'SELECT studentID, studentName, yearLevel, section, program FROM student_records';
 $stmt = $pdo->query($sql);
 $records = $stmt->fetchAll();
+
+
+
+
+//SEARCH
+if (isset($_GET['search']) && !empty(trim($_GET['search']))) {
+    $searchTerm = trim($_GET['search']);
+    $stmt = $pdo->prepare('SELECT studentID, studentName, yearLevel, section, program FROM student_records WHERE studentName LIKE :search OR studentID LIKE :search');
+    $stmt->execute(['search' => "%$searchTerm%"]);
+    $records = $stmt->fetchAll();
+} else {
+    // Fetch all records if no search term is provided
+    $stmt = $pdo->query('SELECT studentID, studentName, yearLevel, section, program FROM student_records');
+    $records = $stmt->fetchAll();
+}
+
+//delete
+if (isset($_POST['delete'])) {
+    $stmt = $pdo->prepare('DELETE FROM student_records WHERE studentID = :studentID');
+    $stmt->execute(['studentID' => $_POST['delete']]);
+    header("Location: dashboard.php");
+    exit;
+}
+
+
 ?>
+
 <!DOCTYPE html>
 <html lang="en">
 
@@ -58,6 +84,13 @@ $records = $stmt->fetchAll();
 
         <div class="card mt-3" id="student-card">
 
+
+            <form action="dashboard.php" method="GET" class="d-flex mb-3 p-3">
+                <input type="text" name="search" class="form-control me-2" placeholder="Search by Student Name or ID" value="<?= isset($_GET['search']) ? htmlspecialchars($_GET['search']) : '' ?>">
+                <button type="submit" class="btn btn-primary">Search</button>
+
+            </form>
+
             <div class="card-header bg-dark text-white">
                 <h4 class="mb-0">Student Records</h4>
             </div>
@@ -78,24 +111,30 @@ $records = $stmt->fetchAll();
                         </thead>
 
                         <tbody>
-                        <?php if (count($records) > 0): ?>
-                            <?php foreach ($records as $row): ?>
+                            <?php if (count($records) > 0): ?>
+                                <?php foreach ($records as $row): ?>
+                                    <tr>
+                                        <td><?= htmlspecialchars($row['studentID']) ?></td>
+                                        <td><?= htmlspecialchars($row['studentName']) ?></td>
+                                        <td><?= htmlspecialchars($row['yearLevel']) ?></td>
+                                        <td><?= htmlspecialchars($row['section']) ?></td>
+                                        <td><?= htmlspecialchars($row['program']) ?></td>
+                                        <td>
+                                            
+                                            <form action="dashboard.php" method="POST">
+                                                
+                                                <input type="hidden" name="delete" value="<?= htmlspecialchars($row['studentID']) ?>">
+                                                <button type="submit" class="btn btn-danger btn-sm" onclick="return confirm('Are you sure you want to delete this record?');">Delete</button>
+                                            </form>
+
+                                        </td>
+                                    </tr>
+                                <?php endforeach; ?>
+                            <?php else: ?>
                                 <tr>
-                                    <td><?= htmlspecialchars($row['studentID']) ?></td>
-                                    <td><?= htmlspecialchars($row['studentName']) ?></td>
-                                    <td><?= htmlspecialchars($row['yearLevel']) ?></td>
-                                    <td><?= htmlspecialchars($row['section']) ?></td>
-                                    <td><?= htmlspecialchars($row['program']) ?></td>
-                                    <td>
-                                        <!-- Action buttons go here (Edit / Delete) -->
-                                    </td>
+                                    <td colspan="6" class="text-center text-muted">No student records found.</td>
                                 </tr>
-                            <?php endforeach; ?>
-                        <?php else: ?>
-                            <tr>
-                                <td colspan="6" class="text-center text-muted">No student records found.</td>
-                            </tr>
-                        <?php endif; ?>
+                            <?php endif; ?>
                         </tbody>
 
                     </table>
